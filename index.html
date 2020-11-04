@@ -1,16 +1,46 @@
 <!DOCTYPE html>
 <html>
    <head>
-      <script type = "text/javascript" src = "https://d3js.org/d3.v3.min.js"></script>
-      
+      <script type = "text/javascript" src = "https://d3js.org/d3.v4.min.js"></script>
+      <style>
+         div#viewport{
+         height: 500px;
+         width: 100%;
+         border:2px solid #000;
+         }
+         svg#timeline-container {
+           height: 1000px;
+           width: 1100px;
+           border:1px dotted #ccc;
+           background-color: #ccc;
+           padding: 10px;
+         }
+         rect.duration {
+            stroke-width:1;
+            stroke:rgb(0,0,0)
+         }
+         div.tooltip {	
+            position: absolute;			
+            text-align: center;			
+            width: 60px;					
+            height: 28px;					
+            padding: 2px;				
+            font: 12px sans-serif;		
+            background: lightsteelblue;	
+            border: 0px;		
+            border-radius: 8px;			
+            pointer-events: none;			
+         }
+     </style>
    </head>
 
    <body>
       <div class = "myclass">
          Hello World!
       </div>
-      <div id = "timeline1"></div>
-      <script type = "text/javascript" src = "d3-timeline.js"></script>
+      <div id = "test-timeline"></div>
+      <div id = "dss-timeline"></div>
+      <script  src="scripts/dss-timeline.js" type="text/javascript"></script>
       <script src="scripts/d3script.js" type="text/javascript"></script>
    </body>
 </html>

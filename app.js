@@ -24,8 +24,14 @@ http.createServer(function (req, res) {
       return res.end();
     });
   }
+  else if (req.url == '/scripts/dss-timeline.js'){
+    fs.readFile('scripts/dss-timeline.js', function(err, data) {
+      res.writeHead(200, {'Content-Type': 'text/javascript'});
+      res.write(data);
+      return res.end();
+    });
+  }
   else
-
     res.end('invalid request');
     
 }).listen(8080);
