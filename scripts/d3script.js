@@ -120,7 +120,7 @@ var svg = d3.select("#dss-timeline").append("div")
 
 var timelineContainerWidth = svg.node().getBoundingClientRect().width;
 
-var startTimes = []
+var startTimes = [];
 
 dssElements.forEach(element => {
   startTimes.push(element.startTime)
@@ -129,6 +129,17 @@ dssElements.forEach(element => {
 var maxDate=new Date(Math.max.apply(null,startTimes));
 var minDate=new Date(Math.min.apply(null,startTimes));
 var dateDifference = maxDate - minDate;
+
+var endTimes = [];
+
+dssElements.forEach(element => {
+  if(element.endTime != null)
+  {
+    endTimes.push(element.endTime)
+  }
+});
+
+var maxEndTime=new Date(Math.max.apply(null,endTimes));
 
 var tooltip = d3.select("#viewport").append("div")
   .attr("class", "tooltip")
@@ -140,23 +151,26 @@ var tooltip = d3.select("#viewport").append("div")
 svg.selectAll("events")
   .data(dssElements)
   .enter()
-  .append("circle")
-  .attr("r", 20)
-  .attr("cx", function(d, i){
+  .append("rect")
+  .attr("width", 10)
+  .attr("height", 10)
+  .attr("x", function(d, i){
     return (d.startTime-minDate)/scale
   })
-  .attr("cy", 300)
-  .attr("class", "xScalable")
+  .attr("y", 300)
+  .attr("class", "xScalableEvent")
   .style("fill", "brown");
 
 // Dss Sessions -------------------------------------
-var durations = dssElements.filter(element => element.timelineObjectType == timelineObjectType.DURATION && element.durationType == durationTypes.DSS_SESSION);
+var dssSessionDurations = dssElements.filter(element => element.timelineObjectType == timelineObjectType.DURATION && element.durationType == durationTypes.DSS_SESSION);
  
 const dssSessionDurationY = 20;
 const dssSessionDurationHeight = 30;
 
+AddYAxisLabel(dssSessionDurationY, dssSessionDurationHeight, "DSS Sessions");
+
 svg.selectAll("dssSessionDurations")
-  .data(durations)
+  .data(dssSessionDurations)
   .enter()
   .append("rect")
   .attr("x", function(d, i){
@@ -185,19 +199,7 @@ svg.selectAll("dssSessionDurations")
     d3.select(this).style("fill", "white");
 });
 
-var addText = svg.selectAll("duration-text")
-  .data(durations)
-  .enter()
-  .append("text")
-  .attr("class", "xScalable")
-  .attr("x", function(d, i){
-    return CalculateCoordinateFromTime(d.startTime) + ScaleTimeDurationToPxLength(d.startTime, d.endTime)/2
-  })
-  .attr("y", dssSessionDurationY+dssSessionDurationHeight/2)
-  .attr("font-family", "Arial")
-  .attr("font-size", "15px")
-  .text(function(d, i){return d.dssSessionId;})
-  .style("text-anchor", "middle");
+var addText = AddDurationText(dssSessionDurations, dssSessionDurationY, dssSessionDurationHeight, function(d){return d.dssSessionId;});
 
 
 // PRIMARY REPLICAS -----------------------------------------------
@@ -207,6 +209,8 @@ var addText = svg.selectAll("duration-text")
   const primaryReplicaDurationY = 100;
   const primaryReplicaDurationHeight = 30
   
+  AddYAxisLabel(primaryReplicaDurationY, primaryReplicaDurationHeight, "Primary Replicas");
+
   svg.selectAll("primaryReplicaDurations")
     .data(primaryReplicaDurations)
     .enter()
@@ -238,19 +242,7 @@ var addText = svg.selectAll("duration-text")
       d3.select(this).style("fill", "white");
   });
   
-  var addText = svg.selectAll("duration-text")
-    .data(primaryReplicaDurations)
-    .enter()
-    .append("text")
-    .attr("class", "xScalable")
-    .attr("x", function(d, i){
-      return CalculateCoordinateFromTime(d.startTime) + ScaleTimeDurationToPxLength(d.startTime, d.endTime)/2
-    })
-    .attr("y", primaryReplicaDurationY+primaryReplicaDurationHeight/2)
-    .attr("font-family", "Arial")
-    .attr("font-size", "15px")
-    .text(function(d, i){return d.replicaId;})
-    .style("text-anchor", "middle");
+  var addText = AddDurationText(primaryReplicaDurations, primaryReplicaDurationY, primaryReplicaDurationHeight, function(d){return d.replicaId;});
 
 // SECONDARY REPLICAS --------------------------------------------------------
 
@@ -258,6 +250,8 @@ var secondaryReplicaDurations = dssElements.filter(element => element.timelineOb
 
 const secondaryReplicaDurationY = 200;
 const secondaryReplicaDurationHeight = 30
+
+AddYAxisLabel(secondaryReplicaDurationY, secondaryReplicaDurationHeight, "Secondary Replicas");
 
 svg.selectAll("secondaryReplicaDurations")
   .data(secondaryReplicaDurations)
@@ -290,43 +284,97 @@ svg.selectAll("secondaryReplicaDurations")
     d3.select(this).style("fill", "white");
 });
 
-var addText = svg.selectAll("duration-text")
-  .data(secondaryReplicaDurations)
+var addText = AddDurationText(secondaryReplicaDurations, secondaryReplicaDurationY, secondaryReplicaDurationHeight, function(d){return d.replicaId;});
+
+function AddYAxisLabel(yCoord, rowHeight, text){
+  return svg
+    .append("text")
+    .attr("x", -70)
+    .attr("y", yCoord+rowHeight/2)
+    .attr("font-family", "Arial")
+    .attr("font-size", "15px")
+    .text(text)
+    .style("text-anchor", "end")
+    .style("alignment-baseline", "middle");
+}
+
+function AddDurationText(data, durationYCoord, durationHeight, textCallback){
+  return svg.selectAll("duration-text")
+  .data(data)
   .enter()
   .append("text")
   .attr("class", "xScalable")
   .attr("x", function(d, i){
     return CalculateCoordinateFromTime(d.startTime) + ScaleTimeDurationToPxLength(d.startTime, d.endTime)/2
   })
-  .attr("y", secondaryReplicaDurationY+secondaryReplicaDurationHeight/2)
+  .attr("y", durationYCoord+durationHeight/2)
   .attr("font-family", "Arial")
   .attr("font-size", "15px")
-  .text(function(d, i){return d.replicaId;})
-  .style("text-anchor", "middle");
+  .attr("pointer-events", "none")
+  .text(textCallback)
+  .style("text-anchor", "middle")
+  .style("alignment-baseline", "middle");
+}
+
+// X TIME AXIS
+
+function CreateXAxis(){
+  var xScale = d3.scaleTime()
+  .domain([minDate, maxEndTime])
+  .range([0, CalculateCoordinateFromTime(maxEndTime)])
+
+  var ticks = xScale.ticks(CalculateCoordinateFromTime(maxEndTime)/50);
+  ticks.push(minDate);
+  ticks.push(maxEndTime);
+  return d3.axisBottom(xScale)
+    .tickFormat(d3.timeFormat("%H:%M:%S"))
+    .tickValues(ticks);
+}
+
+var xAxis = CreateXAxis();
+
+  //.ticks(10);
+svg.append("g")
+  .attr("class", "xAxis xScalable")
+  .attr("transform", "translate(0, 350)")
+  .call(xAxis)
+  .selectAll("text")
+  .attr("class", "xAxisLabels")
+  .attr("y", 0)
+  .attr("x", 30)
+  .attr("transform", "rotate(70)");
 
 // Scale Slider
-
 var sliderSimple = d3
   .sliderBottom()
   .min(1)
-  .max(50)
+  .max(100)
   .width(300)
   .ticks(5)
-  .default(1)
+  .default(10)
   .on('onchange', val => {
-    scale = 1000*val;
+    scale = 100*val;
     svg.selectAll('text.xScalable').attr("x", function(d){
       return CalculateCoordinateFromTime(d.startTime) + ScaleTimeDurationToPxLength(d.startTime, d.endTime)/2;
-    })
+    });
     svg.selectAll('rect.xScalable').attr("x", function(d){
       return CalculateCoordinateFromTime(d.startTime);
-    })
+    });
+    svg.selectAll('rect.xScalableEvent').attr("x", function(d){
+      return CalculateCoordinateFromTime(d.startTime);
+    });
     svg.selectAll('rect.xScalable').attr("width", function(d){
       return ScaleTimeDurationToPxLength(d.startTime, d.endTime);
-    })
+    });
     svg.selectAll('circle.xScalable').attr("cx", function(d){
       return CalculateCoordinateFromTime(d.startTime);
-    })
+    });
+
+    xAxis = CreateXAxis();
+    svg.select('g.xScalable').call(xAxis).selectAll("text")
+    .attr("y", 0)
+    .attr("x", 30)
+    .attr("transform", "rotate(70)");
   });
 
 var gSimple = d3
