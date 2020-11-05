@@ -83,7 +83,13 @@ const timelineObjectType = {
   DURATION: 'duration',
 }
 
-const scale = 1000;
+const durationTypes = {
+  DSS_SESSION: 'DssSession',
+  PRIMARY_REPLICA: 'PrimaryReplica',
+  SECONDARY_REPLICA: 'SecondaryReplica'
+}
+
+var scale = 1000;
 
 var elements = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
 
@@ -91,10 +97,14 @@ var dssElements = [
   {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 24, 5)},
   {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 24, 6)},
   {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 24, 7)},
-  {timelineObjectType: timelineObjectType.DURATION, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 24, 7), endTime: new Date(2020, 0, 17, 3, 28, 7)},
+  {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.DSS_SESSION, startTime: new Date(2020, 0, 17, 3, 24, 7), endTime: new Date(2020, 0, 17, 3, 28, 7), dssSessionId: "DssSessionId1"},
   {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 24, 7)},
-  {timelineObjectType: timelineObjectType.DURATION, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 28, 9), endTime: new Date(2020, 0, 17, 3, 30, 7)},
-  {timelineObjectType: timelineObjectType.DURATION, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 30, 7), endTime: new Date(2020, 0, 17, 3, 35, 7)},
+  {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.DSS_SESSION, startTime: new Date(2020, 0, 17, 3, 28, 9), endTime: new Date(2020, 0, 17, 3, 30, 7), dssSessionId: "DssSessionId2"},
+  {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.DSS_SESSION, startTime: new Date(2020, 0, 17, 3, 30, 7), endTime: new Date(2020, 0, 17, 5, 35, 7), dssSessionId: "DssSessionId3"},
+  {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.PRIMARY_REPLICA, startTime: new Date(2020, 0, 17, 3, 28, 9), endTime: new Date(2020, 0, 17, 3, 30, 7), replicaId: "ReplicaId1"},
+  {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.PRIMARY_REPLICA, startTime: new Date(2020, 0, 17, 3, 30, 7), endTime: new Date(2020, 0, 17, 5, 35, 7), replicaId: "ReplicaId2"},
+  {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.SECONDARY_REPLICA, startTime: new Date(2020, 0, 17, 3, 28, 9), endTime: new Date(2020, 0, 17, 3, 30, 7), replicaId: "ReplicaId2"},
+  {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.SECONDARY_REPLICA, startTime: new Date(2020, 0, 17, 3, 30, 7), endTime: new Date(2020, 0, 17, 5, 35, 7), replicaId: "ReplicaId3"},
 ];
 
 
@@ -103,8 +113,8 @@ var svg = d3.select("#dss-timeline").append("div")
 .append("svg")
 .attr("width", "100%")
 .attr("height", "100%")
-.call(d3.zoom().on("zoom", function () {
-        svg.attr("transform", d3.event.transform)
+.call(d3.zoom().on("zoom", function (event) {
+        svg.attr("transform", event.transform)
 }))
 .append("g");
 
@@ -126,61 +136,219 @@ var tooltip = d3.select("#viewport").append("div")
 
 //var eventOverflowOffset = 0;
 
+// EVENTS ---------------------------------------
 svg.selectAll("events")
   .data(dssElements)
   .enter()
   .append("circle")
   .attr("r", 20)
   .attr("cx", function(d, i){
-    console.log(d.startTime-minDate);
-    return (d.startTime-minDate)/1000
+    return (d.startTime-minDate)/scale
   })
   .attr("cy", 300)
+  .attr("class", "xScalable")
   .style("fill", "brown");
 
-var durations = dssElements.filter(element => element.timelineObjectType == timelineObjectType.DURATION);
+// Dss Sessions -------------------------------------
+var durations = dssElements.filter(element => element.timelineObjectType == timelineObjectType.DURATION && element.durationType == durationTypes.DSS_SESSION);
+ 
+const dssSessionDurationY = 20;
+const dssSessionDurationHeight = 30;
 
-svg.selectAll("durations")
+svg.selectAll("dssSessionDurations")
   .data(durations)
+  .enter()
+  .append("rect")
+  .attr("x", function(d, i){
+    return CalculateCoordinateFromTime(d.startTime)
+  })
+  .attr("y", dssSessionDurationY)
+  .attr("width", function(d, i){
+    return ScaleTimeDurationToPxLength(d.startTime, d.endTime)
+  })
+  .attr("height", dssSessionDurationHeight)
+  .attr("class", "duration xScalable")
+  .style("fill", "white")
+  .on("mouseover", function(event, d) {
+    tooltip.transition()		
+      .duration(200)		
+      .style("opacity", .9);		
+    tooltip.html(d.startTime + "<br/>"  + d.endTime + "<br/>")	
+      .style("left", (event.pageX) + "px")		
+      .style("top", (event.pageY - 28) + "px");
+    d3.select(this).style("fill", "lightsteelblue");
+    })
+  .on("mouseout", function(d) {		
+    tooltip.transition()		
+      .duration(500)		
+      .style("opacity", 0);
+    d3.select(this).style("fill", "white");
+});
+
+var addText = svg.selectAll("duration-text")
+  .data(durations)
+  .enter()
+  .append("text")
+  .attr("class", "xScalable")
+  .attr("x", function(d, i){
+    return CalculateCoordinateFromTime(d.startTime) + ScaleTimeDurationToPxLength(d.startTime, d.endTime)/2
+  })
+  .attr("y", dssSessionDurationY+dssSessionDurationHeight/2)
+  .attr("font-family", "Arial")
+  .attr("font-size", "15px")
+  .text(function(d, i){return d.dssSessionId;})
+  .style("text-anchor", "middle");
+
+
+// PRIMARY REPLICAS -----------------------------------------------
+
+  var primaryReplicaDurations = dssElements.filter(element => element.timelineObjectType == timelineObjectType.DURATION && element.durationType == durationTypes.PRIMARY_REPLICA);
+
+  const primaryReplicaDurationY = 100;
+  const primaryReplicaDurationHeight = 30
+  
+  svg.selectAll("primaryReplicaDurations")
+    .data(primaryReplicaDurations)
+    .enter()
+    .append("rect")
+    .attr("x", function(d, i){
+      console.log(d.startTime-minDate);
+      return CalculateCoordinateFromTime(d.startTime)
+    })
+    .attr("y", primaryReplicaDurationY)
+    .attr("width", function(d, i){
+      return ScaleTimeDurationToPxLength(d.startTime, d.endTime)
+    })
+    .attr("height", primaryReplicaDurationHeight)
+    .attr("class", "duration xScalable")
+    .style("fill", "white")
+    .on("mouseover", function(event, d) {		
+      tooltip.transition()		
+        .duration(200)		
+        .style("opacity", .9);		
+      tooltip.html(d.startTime + "<br/>"  + d.endTime + "<br/>")	
+        .style("left", (event.pageX) + "px")		
+        .style("top", (event.pageY - 28) + "px");
+      d3.select(this).style("fill", "lightsteelblue");
+      })
+    .on("mouseout", function(d) {		
+      tooltip.transition()		
+        .duration(500)		
+        .style("opacity", 0);
+      d3.select(this).style("fill", "white");
+  });
+  
+  var addText = svg.selectAll("duration-text")
+    .data(primaryReplicaDurations)
+    .enter()
+    .append("text")
+    .attr("class", "xScalable")
+    .attr("x", function(d, i){
+      return CalculateCoordinateFromTime(d.startTime) + ScaleTimeDurationToPxLength(d.startTime, d.endTime)/2
+    })
+    .attr("y", primaryReplicaDurationY+primaryReplicaDurationHeight/2)
+    .attr("font-family", "Arial")
+    .attr("font-size", "15px")
+    .text(function(d, i){return d.replicaId;})
+    .style("text-anchor", "middle");
+
+// SECONDARY REPLICAS --------------------------------------------------------
+
+var secondaryReplicaDurations = dssElements.filter(element => element.timelineObjectType == timelineObjectType.DURATION && element.durationType == durationTypes.SECONDARY_REPLICA);
+
+const secondaryReplicaDurationY = 200;
+const secondaryReplicaDurationHeight = 30
+
+svg.selectAll("secondaryReplicaDurations")
+  .data(secondaryReplicaDurations)
   .enter()
   .append("rect")
   .attr("x", function(d, i){
     console.log(d.startTime-minDate);
     return CalculateCoordinateFromTime(d.startTime)
   })
-  .attr("y", 20)
+  .attr("y", secondaryReplicaDurationY)
   .attr("width", function(d, i){
-    console.log(d.endTime)
-    console.log(d.startTime)
-    console.log(d.endTime-d.startTime);
     return ScaleTimeDurationToPxLength(d.startTime, d.endTime)
   })
-  .attr("height", 30)
-  .attr("cy", 400)
-  .attr("class", "duration")
-  .style("fill", "green")
-  .on("mouseover", function(d) {		
+  .attr("height", secondaryReplicaDurationHeight)
+  .attr("class", "duration xScalable")
+  .style("fill", "white")
+  .on("mouseover", function(event, d) {		
     tooltip.transition()		
       .duration(200)		
       .style("opacity", .9);		
-    tooltip.html(d.startTime + "<br/>"  + d.endTime + "<br/>"  + d.eventId)	
-      .style("left", (d3.event.pageX) + "px")		
-      .style("top", (d3.event.pageY - 28) + "px");	
+    tooltip.html(d.startTime + "<br/>"  + d.endTime + "<br/>")	
+      .style("left", (event.pageX) + "px")		
+      .style("top", (event.pageY - 28) + "px");
+    d3.select(this).style("fill", "lightsteelblue");
     })
   .on("mouseout", function(d) {		
     tooltip.transition()		
       .duration(500)		
       .style("opacity", 0);
-});;
+    d3.select(this).style("fill", "white");
+});
+
+var addText = svg.selectAll("duration-text")
+  .data(secondaryReplicaDurations)
+  .enter()
+  .append("text")
+  .attr("class", "xScalable")
+  .attr("x", function(d, i){
+    return CalculateCoordinateFromTime(d.startTime) + ScaleTimeDurationToPxLength(d.startTime, d.endTime)/2
+  })
+  .attr("y", secondaryReplicaDurationY+secondaryReplicaDurationHeight/2)
+  .attr("font-family", "Arial")
+  .attr("font-size", "15px")
+  .text(function(d, i){return d.replicaId;})
+  .style("text-anchor", "middle");
+
+// Scale Slider
+
+var sliderSimple = d3
+  .sliderBottom()
+  .min(1)
+  .max(50)
+  .width(300)
+  .ticks(5)
+  .default(1)
+  .on('onchange', val => {
+    scale = 1000*val;
+    svg.selectAll('text.xScalable').attr("x", function(d){
+      return CalculateCoordinateFromTime(d.startTime) + ScaleTimeDurationToPxLength(d.startTime, d.endTime)/2;
+    })
+    svg.selectAll('rect.xScalable').attr("x", function(d){
+      return CalculateCoordinateFromTime(d.startTime);
+    })
+    svg.selectAll('rect.xScalable').attr("width", function(d){
+      return ScaleTimeDurationToPxLength(d.startTime, d.endTime);
+    })
+    svg.selectAll('circle.xScalable').attr("cx", function(d){
+      return CalculateCoordinateFromTime(d.startTime);
+    })
+  });
+
+var gSimple = d3
+  .select('div#scale-slider')
+  .append('svg')
+  .attr('width', 500)
+  .attr('height', 100)
+  .append('g')
+  .attr('transform', 'translate(30,30)');
+
+gSimple.call(sliderSimple);
+
+//d3.select('#scale-slider').text(d3.format('.2%')(sliderSimple.value()));
 
 
-
+// SCALING UTILS
 function ScaleTimeDurationToPxLength(startTime, endTime){
   return (endTime-startTime)/scale;
 }
 
 function CalculateCoordinateFromTime(time){
-  return (time-minDate)/1000
+  return (time-minDate)/scale
 }
 
 
