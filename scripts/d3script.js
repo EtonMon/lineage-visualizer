@@ -94,11 +94,15 @@ var scale = 1000;
 var elements = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
 
 var dssElements = [
+  {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 24, 7)},
   {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 24, 5)},
   {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 24, 6)},
-  {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 24, 7)},
+  {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 28, 7)},
   {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.DSS_SESSION, startTime: new Date(2020, 0, 17, 3, 24, 7), endTime: new Date(2020, 0, 17, 3, 28, 7), dssSessionId: "DssSessionId1"},
-  {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 24, 7)},
+  {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 50, 7)},
+  {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 4, 24, 7)},
+  {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 4, 24, 7)},
+  {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 4, 25, 7)},
   {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.DSS_SESSION, startTime: new Date(2020, 0, 17, 3, 28, 9), endTime: new Date(2020, 0, 17, 3, 30, 7), dssSessionId: "DssSessionId2"},
   {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.DSS_SESSION, startTime: new Date(2020, 0, 17, 3, 30, 7), endTime: new Date(2020, 0, 17, 5, 35, 7), dssSessionId: "DssSessionId3"},
   {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.PRIMARY_REPLICA, startTime: new Date(2020, 0, 17, 3, 28, 9), endTime: new Date(2020, 0, 17, 3, 30, 7), replicaId: "ReplicaId1"},
@@ -109,14 +113,14 @@ var dssElements = [
 
 
 var svg = d3.select("#dss-timeline").append("div")
-.attr("id", "viewport")
-.append("svg")
-.attr("width", "100%")
-.attr("height", "100%")
-.call(d3.zoom().on("zoom", function (event) {
-        svg.attr("transform", event.transform)
-}))
-.append("g");
+  .attr("id", "viewport")
+  .append("svg")
+  .attr("width", "100%")
+  .attr("height", "100%")
+  .call(d3.zoom().on("zoom", function (event) {
+          svg.attr("transform", event.transform)
+  }))
+  .append("g");
 
 var timelineContainerWidth = svg.node().getBoundingClientRect().width;
 
@@ -148,8 +152,15 @@ var tooltip = d3.select("#viewport").append("div")
 //var eventOverflowOffset = 0;
 
 // EVENTS ---------------------------------------
-svg.selectAll("events")
-  .data(dssElements)
+var dssEvents = dssElements.filter(element => element.timelineObjectType == timelineObjectType.EVENT).sort(function(a, b){ return a.startTime - b.startTime});
+
+
+
+var dssEventY = 300;
+var maxStackLevel = 0;
+
+var eventShapes = svg.selectAll("events")
+  .data(dssEvents)
   .enter()
   .append("rect")
   .attr("width", 10)
@@ -157,9 +168,47 @@ svg.selectAll("events")
   .attr("x", function(d, i){
     return (d.startTime-minDate)/scale
   })
-  .attr("y", 300)
+  .attr("y", dssEventY)
   .attr("class", "xScalableEvent")
-  .style("fill", "brown");
+  .style("fill", "green");
+
+console.log(eventShapes);
+StackEventShapesIfOverlapping();
+
+function StackEventShapesIfOverlapping(){
+  console.log("Test")
+  var lastShape = null;
+  maxStackLevel = 0;
+  var stackLevel = 0;
+
+  svg.selectAll("rect.xScalableEvent").attr("y", function(){return CalculateYForEventShape(d3.select(this))});
+
+  function CalculateYForEventShape(selection){
+    if(lastShape == null){
+      lastShape = selection;
+      return dssEventY;
+    }
+    if(AreShapesOverlapping(lastShape, selection)){
+      stackLevel++;
+      if(maxStackLevel < stackLevel){
+        maxStackLevel = stackLevel;
+      }
+      lastShape = selection;
+      return dssEventY+15*stackLevel;
+    }
+    else{
+      stackLevel = 0;
+      lastShape = selection;
+      return dssEventY;
+    }
+  }
+}
+
+function AreShapesOverlapping(selection1, selection2){
+  console.log()
+  return !(selection1.attr("x")+5 < selection2.attr("x")-5 || 
+  selection1.attr("x")-5 > selection2.attr("x")+5);
+}
 
 // Dss Sessions -------------------------------------
 var dssSessionDurations = dssElements.filter(element => element.timelineObjectType == timelineObjectType.DURATION && element.durationType == durationTypes.DSS_SESSION);
@@ -333,10 +382,11 @@ function CreateXAxis(){
 
 var xAxis = CreateXAxis();
 
-  //.ticks(10);
+var xAxisY = dssEventY + 20 + maxStackLevel*15;
+
 svg.append("g")
   .attr("class", "xAxis xScalable")
-  .attr("transform", "translate(0, 350)")
+  .attr("transform", "translate(0, " + xAxisY + ")")
   .call(xAxis)
   .selectAll("text")
   .attr("class", "xAxisLabels")
@@ -359,19 +409,24 @@ var sliderSimple = d3
     });
     svg.selectAll('rect.xScalable').attr("x", function(d){
       return CalculateCoordinateFromTime(d.startTime);
+    }).attr("width", function(d){
+      return ScaleTimeDurationToPxLength(d.startTime, d.endTime);
     });
     svg.selectAll('rect.xScalableEvent').attr("x", function(d){
       return CalculateCoordinateFromTime(d.startTime);
     });
-    svg.selectAll('rect.xScalable').attr("width", function(d){
-      return ScaleTimeDurationToPxLength(d.startTime, d.endTime);
+    StackEventShapesIfOverlapping();
+    svg.selectAll('circle.xScalable').attr("cx", function(d){
+      return CalculateCoordinateFromTime(d.startTime);
     });
+
     svg.selectAll('circle.xScalable').attr("cx", function(d){
       return CalculateCoordinateFromTime(d.startTime);
     });
 
     xAxis = CreateXAxis();
-    svg.select('g.xScalable').call(xAxis).selectAll("text")
+    xAxisY = dssEventY + 20 + maxStackLevel*15;
+    svg.select('g.xScalable').attr("transform", "translate(0, " + xAxisY + ")").call(xAxis).selectAll("text")
     .attr("y", 0)
     .attr("x", 30)
     .attr("transform", "rotate(70)");
