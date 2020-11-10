@@ -5,9 +5,8 @@
       <script src="https://unpkg.com/d3-simple-slider"></script>
       <style>
          div#viewport{
-         height: 500px;
+         height: 600px;
          width: 100%;
-         border:2px solid #000;
          }
          svg#timeline-container {
            height: 1000px;
@@ -22,22 +21,40 @@
          }
          div.tooltip {	
             position: absolute;			
-            text-align: center;			
-            width: 60px;					
-            height: 28px;					
-            padding: 2px;				
+            text-align: left;					
+            padding: 4px;				
             font: 12px sans-serif;		
-            background: lightsteelblue;	
+            background: lightgrey;	
             border: 0px;		
             border-radius: 8px;			
             pointer-events: none;			
          }
+
+         /* div.tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted black;
+         } 
+         */
+
+
+         /* Tooltip text */
+         /* .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: black;
+            color: #fff;
+            text-align: center;
+            padding: 5px 0;
+            border-radius: 6px;
+            
+         } */
      </style>
    </head>
 
    <body>
       <div class = "myclass">
-         Hello World!
+         Hello Word!
       </div>
       <div id = "test-timeline"></div>
       <div id = "dss-timeline"></div>

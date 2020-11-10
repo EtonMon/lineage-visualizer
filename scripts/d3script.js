@@ -89,12 +89,27 @@ const durationTypes = {
   SECONDARY_REPLICA: 'SecondaryReplica'
 }
 
+const dssSessionDurationTypes = {
+  ACTIVE_SESSION: 'Session',
+  HIBERNATED_SESSION: 'Hibernated'
+}
+
+const dssEventTypes = {
+  REPLICA_CREATED: 1,
+  REPLICA_DELETED: 2,
+  SESSION_CREATED: 3,
+  SESSION_DELETED: 4,
+  CLIENT_JOINED: 5,
+  CLIENT_LEFT: 6,
+  FAILOVER: 7,
+}
+
 var scale = 1000;
 
 var elements = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
 
 var dssElements = [
-  {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 24, 7)},
+  {timelineObjectType: timelineObjectType.EVENT, dssEventType: dssEventTypes.CLIENT_JOINED, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 24, 7)},
   {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 24, 5)},
   {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 24, 6)},
   {timelineObjectType: timelineObjectType.EVENT, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 28, 7)},
@@ -109,6 +124,32 @@ var dssElements = [
   {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.PRIMARY_REPLICA, startTime: new Date(2020, 0, 17, 3, 30, 7), endTime: new Date(2020, 0, 17, 5, 35, 7), replicaId: "ReplicaId2"},
   {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.SECONDARY_REPLICA, startTime: new Date(2020, 0, 17, 3, 28, 9), endTime: new Date(2020, 0, 17, 3, 30, 7), replicaId: "ReplicaId2"},
   {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.SECONDARY_REPLICA, startTime: new Date(2020, 0, 17, 3, 30, 7), endTime: new Date(2020, 0, 17, 5, 35, 7), replicaId: "ReplicaId3"},
+];
+
+var dssElements = [
+  {timelineObjectType: timelineObjectType.EVENT, dssEventType: dssEventTypes.CLIENT_JOINED, eventId: "aaaa", startTime: new Date(2020, 0, 17, 3, 10, 7, 100), clientId: "ClientId1"},
+  {timelineObjectType: timelineObjectType.EVENT, dssEventType: dssEventTypes.REPLICA_CREATED, eventId: "aaab", startTime: new Date(2020, 0, 17, 3, 10, 7, 200), replicaId: "ReplicaId1", creationReason: "InitialCreation", isPrimary: true},
+  {timelineObjectType: timelineObjectType.EVENT, dssEventType: dssEventTypes.REPLICA_CREATED, eventId: "aaab", startTime: new Date(2020, 0, 17, 3, 10, 7, 250), replicaId: "ReplicaId2", creationReason: "InitialCreation", isPrimary: false},
+  {timelineObjectType: timelineObjectType.EVENT, dssEventType: dssEventTypes.SESSION_CREATED, eventId: "aaac", startTime: new Date(2020, 0, 17, 3, 10, 7, 300), sessionId: "DssSessionId1"},
+  {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.DSS_SESSION, dssSessionDurationType: dssSessionDurationTypes.ACTIVE_SESSION, startTime: new Date(2020, 0, 17, 3, 10, 7, 300), endTime: new Date(2020, 0, 17, 4, 5, 20, 500), dssSessionId: "DssSessionId1"},
+  {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.PRIMARY_REPLICA, startTime: new Date(2020, 0, 17, 3, 10, 7, 200), endTime: new Date(2020, 0, 17, 4, 50, 15, 100), replicaId: "ReplicaId1"},
+  {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.SECONDARY_REPLICA, startTime: new Date(2020, 0, 17, 3, 10, 7, 200), endTime: new Date(2020, 0, 17, 4, 50, 15, 100), replicaId: "ReplicaId2"},
+  {timelineObjectType: timelineObjectType.EVENT, dssEventType: dssEventTypes.SESSION_DELETED, eventId: "aaad", startTime: new Date(2020, 0, 17, 4, 5, 20, 500), sessionId: "DssSessionId1", sessionDeletedReason: "SessionHibernated"},
+  {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.DSS_SESSION, dssSessionDurationType: dssSessionDurationTypes.HIBERNATED_SESSION, startTime: new Date(2020, 0, 17, 4, 5, 20, 500), endTime: new Date(2020, 0, 17, 4, 30, 15, 100), dssSessionId: null},
+  {timelineObjectType: timelineObjectType.EVENT, dssEventType: dssEventTypes.FAILOVER, eventId: "aaae", startTime: new Date(2020, 0, 17, 4, 30, 14, 100), failoverReason: "NoDssSession", isSuccess: true},
+  {timelineObjectType: timelineObjectType.EVENT, dssEventType: dssEventTypes.SESSION_CREATED, eventId: "aaac", startTime: new Date(2020, 0, 17, 4, 30, 15, 100), sessionId: "DssSessionId2"},
+  {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.DSS_SESSION, dssSessionDurationType: dssSessionDurationTypes.ACTIVE_SESSION, startTime: new Date(2020, 0, 17, 4, 30, 15, 100), endTime: new Date(2020, 0, 17, 4, 50, 15, 100), dssSessionId: "DssSessionId2"},
+  {timelineObjectType: timelineObjectType.EVENT, dssEventType: dssEventTypes.FAILOVER, eventId: "aaae", startTime: new Date(2020, 0, 17, 4, 50, 15, 100), failoverReason: "MachineShutdown", isSuccess: true},
+  {timelineObjectType: timelineObjectType.EVENT, dssEventType: dssEventTypes.SESSION_DELETED, eventId: "aaad", startTime: new Date(2020, 0, 17, 4, 50, 17, 100), sessionDeletedReason: "MachineShutdown", sessionId: "DssSessionId2"},
+  {timelineObjectType: timelineObjectType.EVENT, dssEventType: dssEventTypes.REPLICA_DELETED, eventId: "aaae", startTime: new Date(2020, 0, 17, 4, 50, 15, 100), replicaId: "ReplicaId1", replicaDeletedReason: "MachineShutdown"},
+  {timelineObjectType: timelineObjectType.EVENT, dssEventType: dssEventTypes.REPLICA_CREATED, eventId: "aaab", startTime: new Date(2020, 0, 17, 4, 50, 19, 100), replicaId: "ReplicaId3", creationReason: "MachineShutdown", isPrimary: false},
+  {timelineObjectType: timelineObjectType.EVENT, dssEventType: dssEventTypes.SESSION_CREATED, eventId: "aaac", startTime: new Date(2020, 0, 17, 4, 50, 20, 100), sessionId: "DssSessionId3"},
+  {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.DSS_SESSION, dssSessionDurationType: dssSessionDurationTypes.ACTIVE_SESSION, startTime: new Date(2020, 0, 17, 4, 50, 20, 100), endTime: new Date(2020, 0, 17, 5, 18, 20, 500), dssSessionId: "DssSessionId3"},
+  {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.PRIMARY_REPLICA, startTime: new Date(2020, 0, 17, 4, 50, 19, 100), endTime: new Date(2020, 0, 17, 5, 18, 20, 500), replicaId: "ReplicaId2"},
+  {timelineObjectType: timelineObjectType.DURATION, durationType: durationTypes.SECONDARY_REPLICA, startTime: new Date(2020, 0, 17, 4, 50, 19, 100), endTime: new Date(2020, 0, 17, 5, 19, 12, 500), replicaId: "ReplicaId3"},
+  {timelineObjectType: timelineObjectType.EVENT, dssEventType: dssEventTypes.SESSION_DELETED, eventId: "aaad", startTime: new Date(2020, 0, 17, 5, 18, 20, 500), sessionDeletedReason: "SaveFailure", sessionId: "DssSessionId3"},
+  {timelineObjectType: timelineObjectType.EVENT, dssEventType: dssEventTypes.REPLICA_DELETED, eventId: "aaae", startTime: new Date(2020, 0, 17, 5, 18, 20, 500), replicaId: "ReplicaId2", replicaDeletedReason: "SaveFailure"},
+  {timelineObjectType: timelineObjectType.EVENT, dssEventType: dssEventTypes.REPLICA_DELETED, eventId: "aaae", startTime: new Date(2020, 0, 17, 5, 19, 12, 500), replicaId: "ReplicaId3", replicaDeletedReason: "Zombie"},
 ];
 
 
@@ -159,6 +200,9 @@ var dssEvents = dssElements.filter(element => element.timelineObjectType == time
 var dssEventY = 300;
 var maxStackLevel = 0;
 
+AddYAxisLabel(dssEventY, 0, "Events");
+
+
 var eventShapes = svg.selectAll("events")
   .data(dssEvents)
   .enter()
@@ -170,7 +214,22 @@ var eventShapes = svg.selectAll("events")
   })
   .attr("y", dssEventY)
   .attr("class", "xScalableEvent")
-  .style("fill", "green");
+  .style("fill", function(d){ return GetEventFill(d);})
+  .on("mouseover", function(event, d) {		
+    tooltip.transition()		
+      .duration(200)		
+      .style("opacity", .9);		
+      tooltip.html(PrintEventInfo(d))
+      .style("left", (event.pageX) + "px")		
+      .style("top", (event.pageY) + "px");
+    d3.select(this).style("stroke-width", "1").style("stroke", "red");
+    })
+  .on("mouseout", function(d) {		
+    tooltip.transition()		
+      .duration(500)		
+      .style("opacity", 0);
+      d3.select(this).style("stroke-width", "0");
+  });
 
 console.log(eventShapes);
 StackEventShapesIfOverlapping();
@@ -186,6 +245,7 @@ function StackEventShapesIfOverlapping(){
   function CalculateYForEventShape(selection){
     if(lastShape == null){
       lastShape = selection;
+      stackLevel = 0;
       return dssEventY;
     }
     if(AreShapesOverlapping(lastShape, selection)){
@@ -210,6 +270,46 @@ function AreShapesOverlapping(selection1, selection2){
   selection1.attr("x")-5 > selection2.attr("x")+5);
 }
 
+function PrintEventInfo(d){
+  if(d.dssEventType == dssEventTypes.SESSION_CREATED){
+    return "<b>Event: Session Created</b><br/>" + PrintBaseEventInfo(d) + "<br/>SessionId: " + d.sessionId;
+  }else if(d.dssEventType == dssEventTypes.SESSION_DELETED){
+    return "<b>Event: Session Deleted</b><br/>" + PrintBaseEventInfo(d) + "<br/>SessionId: " + d.sessionId + "<br/>Reason: " + d.sessionDeletedReason;
+  }else if(d.dssEventType == dssEventTypes.REPLICA_CREATED){
+    return "<b>Event: Replica Created</b><br/>" + PrintBaseEventInfo(d) + "<br/>ReplicaId: " + d.replicaId + "<br/>Reason: " + d.creationReason;
+  }else if(d.dssEventType == dssEventTypes.REPLICA_DELETED){
+    return "<b>Event: Replica Deleted</b><br/>" + PrintBaseEventInfo(d) + "<br/>ReplicaId: " + d.replicaId + "<br/>Reason: " + d.replicaDeletedReason;
+  }else if(d.dssEventType == dssEventTypes.CLIENT_JOINED){
+    return "<b>Event: Client Joined</b><br/>" + PrintBaseEventInfo(d) + "<br/>ClientId: " + d.clientId;
+  }else if(d.dssEventType == dssEventTypes.CLIENT_LEFT){
+    return "<b>Event: Client Left</b><br/>" + PrintBaseEventInfo(d) + "<br/>ClientId: " + d.clientId;
+  }else if(d.dssEventType == dssEventTypes.FAILOVER){
+    return "<b>Event: Failover</b><br/>" + PrintBaseEventInfo(d) + "<br/>FailoverReason: " + d.failoverReason + "<br/>IsSuccess: " + d.isSuccess;
+  }
+}
+
+function PrintBaseEventInfo(d){
+  return "EventId: " + d.eventId + "<br/>Time: " + FormatDateTime(d.startTime)
+}
+
+function GetEventFill(d){
+  if(d.dssEventType == dssEventTypes.SESSION_CREATED){
+    return "blue";
+  }else if(d.dssEventType == dssEventTypes.SESSION_DELETED){
+    return "green";
+  }else if(d.dssEventType == dssEventTypes.REPLICA_CREATED){
+    return "orange";
+  }else if(d.dssEventType == dssEventTypes.REPLICA_DELETED){
+    return "grey";
+  }else if(d.dssEventType == dssEventTypes.CLIENT_JOINED){
+    return "purple";
+  }else if(d.dssEventType == dssEventTypes.CLIENT_LEFT){
+    return "yellow";
+  }else if(d.dssEventType == dssEventTypes.FAILOVER){
+    return "lime";
+  }
+}
+
 // Dss Sessions -------------------------------------
 var dssSessionDurations = dssElements.filter(element => element.timelineObjectType == timelineObjectType.DURATION && element.durationType == durationTypes.DSS_SESSION);
  
@@ -231,25 +331,33 @@ svg.selectAll("dssSessionDurations")
   })
   .attr("height", dssSessionDurationHeight)
   .attr("class", "duration xScalable")
-  .style("fill", "white")
+  .style("fill", function(d){ return GetDssSessionFill(d)})
   .on("mouseover", function(event, d) {
     tooltip.transition()		
       .duration(200)		
       .style("opacity", .9);		
-    tooltip.html(d.startTime + "<br/>"  + d.endTime + "<br/>")	
-      .style("left", (event.pageX) + "px")		
-      .style("top", (event.pageY - 28) + "px");
+    tooltip.html("Id: " + d.dssSessionId + "<br/>Start Time: " + FormatDateTime(d.startTime) + "<br/>End Time: " + FormatDateTime(d.endTime) + "<br/>")
+      .style("left", (event.pageX + 20) + "px")		
+      .style("top", (event.pageY + 20) + "px");
     d3.select(this).style("fill", "lightsteelblue");
     })
   .on("mouseout", function(d) {		
     tooltip.transition()		
       .duration(500)		
       .style("opacity", 0);
-    d3.select(this).style("fill", "white");
+    d3.select(this).style("fill", function(d){ return GetDssSessionFill(d)});
 });
 
 var addText = AddDurationText(dssSessionDurations, dssSessionDurationY, dssSessionDurationHeight, function(d){return d.dssSessionId;});
 
+function GetDssSessionFill(d){
+  if(d.dssSessionDurationType == dssSessionDurationTypes.HIBERNATED_SESSION){
+    return "yellow";
+  }else{
+    return "white";
+  }
+  
+}
 
 // PRIMARY REPLICAS -----------------------------------------------
 
@@ -275,13 +383,13 @@ var addText = AddDurationText(dssSessionDurations, dssSessionDurationY, dssSessi
     .attr("height", primaryReplicaDurationHeight)
     .attr("class", "duration xScalable")
     .style("fill", "white")
-    .on("mouseover", function(event, d) {		
+    .on("mouseover", function(event, d) {	
       tooltip.transition()		
         .duration(200)		
         .style("opacity", .9);		
-      tooltip.html(d.startTime + "<br/>"  + d.endTime + "<br/>")	
-        .style("left", (event.pageX) + "px")		
-        .style("top", (event.pageY - 28) + "px");
+      tooltip.html("Id: " + d.replicaId + "<br/>Start Time: " + FormatDateTime(d.startTime) + "<br/>End Time: " + FormatDateTime(d.endTime) + "<br/>")
+      .style("left", (event.pageX + 20) + "px")		
+      .style("top", (event.pageY + 20) + "px");
       d3.select(this).style("fill", "lightsteelblue");
       })
     .on("mouseout", function(d) {		
@@ -321,9 +429,9 @@ svg.selectAll("secondaryReplicaDurations")
     tooltip.transition()		
       .duration(200)		
       .style("opacity", .9);		
-    tooltip.html(d.startTime + "<br/>"  + d.endTime + "<br/>")	
-      .style("left", (event.pageX) + "px")		
-      .style("top", (event.pageY - 28) + "px");
+      tooltip.html("Id: " + d.replicaId + "<br/>Start Time: " + FormatDateTime(d.startTime) + "<br/>End Time: " + FormatDateTime(d.endTime) + "<br/>")
+      .style("left", (event.pageX + 20) + "px")		
+      .style("top", (event.pageY + 20) + "px");
     d3.select(this).style("fill", "lightsteelblue");
     })
   .on("mouseout", function(d) {		
@@ -391,7 +499,7 @@ svg.append("g")
   .selectAll("text")
   .attr("class", "xAxisLabels")
   .attr("y", 0)
-  .attr("x", 30)
+  .attr("x", 50)
   .attr("transform", "rotate(70)");
 
 // Scale Slider
@@ -454,6 +562,15 @@ function CalculateCoordinateFromTime(time){
   return (time-minDate)/scale
 }
 
+function FormatDateTime(dateTime){
+  return `${
+    (dateTime.getMonth()+1).toString().padStart(2, '0')}/${
+      dateTime.getDate().toString().padStart(2, '0')}/${
+        dateTime.getFullYear().toString().padStart(4, '0')} ${
+          dateTime.getHours().toString().padStart(2, '0')}:${
+            dateTime.getMinutes().toString().padStart(2, '0')}:${
+              dateTime.getSeconds().toString().padStart(2, '0')}`;
+}
 
 // svg.append("circle")
 // .attr("cx", 0)
